@@ -91,7 +91,7 @@ class Splitter(ABC):
                     )
 
                     if len(chapter.parent_headings) == 0:
-                        toc += f"\n{indent}- {title}:"
+                        toc += f"\n{indent}- {title}:\n{indent}{indent}- {chapter_path.relative_to(out_path)}"
                     else:
                         toc += f"\n{indent}- {title}: {chapter_path.relative_to(out_path)}"
             with open(chapter_path, mode="a") as file:
