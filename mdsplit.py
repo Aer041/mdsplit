@@ -68,7 +68,14 @@ class Splitter(ABC):
                 else get_valid_filename(chapter.heading.heading_title) + ".md"
             )
 
+            # create folder and index if heading 1 to allow clickable Title in mkdocs
+            if len(chapter.parent_headings) == 0:
+                chapter_dir = chapter_dir / chapter_filename[:-3] 
+                chapter_filename="index.md"
+                chapter_dir.mkdir(parents=True, exist_ok=True)
+          
             chapter_path = chapter_dir / chapter_filename
+
             if self.verbose:
                 print(f"Write {len(chapter.text)} lines to '{chapter_path}'")
             if not chapter_path.exists():
