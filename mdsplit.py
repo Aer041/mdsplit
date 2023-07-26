@@ -76,13 +76,17 @@ class Splitter(ABC):
                 # (can happen multiple times for duplicate headings)
                 self.stats.new_out_files += 1
                 if self.toc:
-                    indent = len(chapter.parent_headings) * "  "
+                    indent = (len(chapter.parent_headings) + 1) * "  "
                     title = (
                         Splitter.remove_md_suffix(fallback_out_file_name)
                         if chapter.heading is None
                         else chapter.heading.heading_title
                     )
-                    toc += f"\n{indent}- [{title}](<./{chapter_path.relative_to(out_path)}>)"
+
+                    if len(chapter.parent_headings) == 0:
+                        toc += f"\n{indent}- {title}:"
+                    else:
+                        toc += f"\n{indent}- {title}: {chapter_path.relative_to(out_path)}"
             with open(chapter_path, mode="a") as file:
                 for line in chapter.text:
                     file.write(line)
