@@ -89,7 +89,13 @@ class Splitter(ABC):
                         toc += f"\n{indent}- {title}: {chapter_path.relative_to(out_path)}"
             with open(chapter_path, mode="a") as file:
                 for line in chapter.text:
-                    file.write(line)
+                    result = re.search("^[ ]{0,3}(#+)(.*)", line)
+                    # do not write line heading 2 as it is already in the file name
+                    if result is None or (len(result[1]) != 2):
+                        # reduce heading of one level as we removed heading 2
+                        if result is not None and (len(result[1]) > 2):
+                            line = line[1:]
+                        file.write(line)
 
         if self.toc:
             self.stats.new_out_files += 1
