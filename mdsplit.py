@@ -59,7 +59,7 @@ class Splitter(ABC):
             self.stats.chapters += 1
             chapter_dir = out_path
             for parent in chapter.parent_headings:
-                chapter_dir = chapter_dir / get_valid_filename(parent)
+                chapter_dir = chapter_dir / get_valid_filename(parent).lower()
             chapter_dir.mkdir(parents=True, exist_ok=True)
 
             chapter_filename = (
@@ -68,10 +68,12 @@ class Splitter(ABC):
                 else get_valid_filename(chapter.heading.heading_title) + ".md"
             )
 
+            chapter_filename = chapter_filename.lower()
+
             # create folder and index if heading 1 to allow clickable Title in mkdocs
             if len(chapter.parent_headings) == 0:
                 chapter_dir = chapter_dir / chapter_filename[:-3] 
-                chapter_filename="index.md"
+                chapter_filename = "index.md"
                 chapter_dir.mkdir(parents=True, exist_ok=True)
           
             chapter_path = chapter_dir / chapter_filename
