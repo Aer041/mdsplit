@@ -59,7 +59,7 @@ class Splitter(ABC):
             self.stats.chapters += 1
             chapter_dir = out_path
             for parent in chapter.parent_headings:
-                chapter_dir = chapter_dir / get_valid_filename(parent).lower()
+                chapter_dir = chapter_dir / get_valid_filename(parent)
             chapter_dir.mkdir(parents=True, exist_ok=True)
 
             chapter_filename = (
@@ -67,8 +67,6 @@ class Splitter(ABC):
                 if chapter.heading is None
                 else get_valid_filename(chapter.heading.heading_title) + ".md"
             )
-
-            chapter_filename = chapter_filename.lower()
 
             # create folder and index if heading 1 to allow clickable Title in mkdocs
             if len(chapter.parent_headings) == 0:
@@ -296,7 +294,7 @@ def get_valid_filename(name):
     s = re.sub(r"(?u)[^-\w. ]", "", s)
     if s in {"", ".", ".."}:
         raise ValueError(f"Could not derive file name from '{name}'")
-    return s
+    return s.lower()
 
 
 def main():
