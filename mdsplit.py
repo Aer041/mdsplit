@@ -65,12 +65,12 @@ class Splitter(ABC):
             chapter_filename = (
                 fallback_out_file_name
                 if chapter.heading is None
-                else get_valid_filename(chapter.heading.heading_title) + ".md"
+                else get_valid_filename(chapter.heading.heading_path) + ".md"
             )
 
             # create folder and index if heading 1 to allow clickable Title in mkdocs
             if len(chapter.parent_headings) == 0:
-                chapter_dir = chapter_dir / chapter_filename[:-3] 
+                chapter_dir = chapter_dir / Splitter.remove_md_suffix(chapter_filename)
                 chapter_filename = "index.md"
                 chapter_dir.mkdir(parents=True, exist_ok=True)
           
@@ -97,7 +97,7 @@ class Splitter(ABC):
             with open(chapter_path, mode="a") as file:
                 for line in chapter.text:
                     result = re.search("^[ ]{0,3}(#+)(.*)", line)
-                    # do not write line heading 2 as it is already in the file name
+                    # do not write line heading 2 as it is already in the navigation tab
                     if result is None or (len(result[1]) != 2):
                         # reduce heading of one level as we removed heading 2
                         if result is not None and (len(result[1]) > 2):
@@ -199,7 +199,7 @@ def split_by_heading(text, max_level):
     curr_lines = []
     within_fence = False
     for next_line in text:
-        next_line = Line(next_line)
+        next_line = Line(next_line, max_level)
 
         if next_line.is_fence():
             within_fence = not within_fence
@@ -214,7 +214,7 @@ def split_by_heading(text, max_level):
 
                 if curr_heading_line is not None:
                     curr_level = curr_heading_line.heading_level
-                    curr_parent_headings[curr_level - 1] = curr_heading_line.heading_title
+                    curr_parent_headings[curr_level - 1] = curr_heading_line.heading_path
                     for level in range(curr_level, MAX_HEADING_LEVEL):
                         curr_parent_headings[level] = None
 
@@ -246,13 +246,15 @@ class Line:
     - whitespace around title are stripped
     """
 
-    def __init__(self, line):
+    def __init__(self, line, max_level):
         self.full_line = line
+        self.max_level = max_level
         self._detect_heading(line)
 
     def _detect_heading(self, line):
         self.heading_level = 0
         self.heading_title = None
+        self.heading_path = None
         result = re.search("^[ ]{0,3}(#+)(.*)", line)
         if result is not None and (len(result[1]) <= MAX_HEADING_LEVEL):
             title = result[2]
@@ -263,7 +265,21 @@ class Line:
 
             # strip whitespace and closing hashes
             title = title.strip().rstrip("#").rstrip()
-            self.heading_title = title
+
+            # rewrite the heading title without the potential bracket
+            self.full_line = re.sub('{[^}]*}', '', line)
+
+            # split heading between the path (into brackets) and the title (all the rest)
+            if self.heading_level <= self.max_level:
+                pattern = re.search(r"\{(\w+)\}", title)
+                if pattern is not None:
+                    self.heading_path = pattern.group(1)
+                    self.heading_title = re.sub('{[^}]*}', '', title)
+                else:
+                    raise ValueError(f"Could not find word into brack for '{title}'")
+            else:
+                self.heading_title = title
+                self.heading_path = title
 
     def is_fence(self):
         for fence in FENCES:
